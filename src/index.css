@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .font-display {
+    font-family: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  }
+  .font-sans, .font-inter {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+  .font-mono-num {
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .font-code {
+    font-family: 'JetBrains Mono', monospace;
+  }
+  
+  .glow-red {
+    box-shadow: 0 0 20px rgba(255, 10, 22, 0.25);
+  }
+  .glow-red-subtle {
+    box-shadow: 0 0 15px rgba(255, 10, 22, 0.12);
+  }
+  .shadow-card {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+  .shadow-card-hover {
+    box-shadow: 0 10px 30px rgba(255, 10, 22, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  }
+}
+
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: #050505;
+  color: #F4F4F5;
+}
+
+/* Ambient crimson glow background overlay */
+body::before {
+  content: '';
+  position: fixed;
+  top: -20%;
+  left: 20%;
+  width: 60vw;
+  height: 60vw;
+  background: radial-gradient(circle, rgba(255, 10, 22, 0.04) 0%, rgba(0, 0, 0, 0) 70%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Custom dark scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #09090b;
+}
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}

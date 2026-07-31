@@ -1,0 +1,6 @@
+{
+  "name": "Route402",
+  "description": "An enterprise-grade x402 AI agent payment router & Algorand settlement engine",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
