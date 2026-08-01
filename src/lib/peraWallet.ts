@@ -48,7 +48,9 @@ export async function ensurePeraSession(connectedAddress: string): Promise<PeraW
 }
 
 /**
- * Creates and prompts Pera Wallet to sign an x402 payment transaction (Single Provider)
+ * Creates and prompts Pera Wallet to sign an x402 USDC payment transaction (Single Provider)
+ * ALWAYS transfers USDC ASA (#10458941 TestNet / #31566704 MainNet).
+ * If the user's account is not opted into USDC ASA, bundles an Opt-In transaction into the group.
  */
 export async function sendPeraPaymentTransaction(
   connectedAddress: string,
@@ -66,50 +68,55 @@ export async function sendPeraPaymentTransaction(
     const algodClient = new algosdk.Algodv2('', serverUrl, 443);
     const suggestedParams = await algodClient.getTransactionParams().do();
 
-    // Check account assets to see if USDC ASA is opted in
-    let isUsdcOptedIn = false;
     const targetAssetId = network === 'mainnet' ? 31566704 : 10458941;
 
+    // Check if connected address is opted into USDC ASA
+    let isUsdcOptedIn = false;
     try {
-      const accountInfo = await algodClient.accountInformation(connectedAddress).do();
-      isUsdcOptedIn = accountInfo.assets?.some(
-        (a: any) => a['asset-id'] === targetAssetId
-      ) || false;
+      const accountInfo: any = await algodClient.accountInformation(connectedAddress).do();
+      const assets = accountInfo.assets || accountInfo['assets'] || [];
+      isUsdcOptedIn = assets.some(
+        (a: any) =>
+          Number(a['asset-id'] || a['assetId'] || a['asset-index'] || 0) === targetAssetId
+      );
     } catch (e) {
-      // Account info fetch silent fallback
+      console.warn('[Pera Wallet] Account info check failed, assuming opt-in required:', e);
     }
 
-    let txn: algosdk.Transaction;
+    const txns: algosdk.Transaction[] = [];
+    const txnsToSign: { txn: algosdk.Transaction; signers: string[] }[] = [];
 
-    if (isUsdcOptedIn) {
-      // Create USDC ASA Transfer Transaction
-      txn = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+    // 1. If not opted into USDC ASA, bundle Opt-In Transaction (0 USDC to self)
+    if (!isUsdcOptedIn) {
+      console.log('[Pera Wallet] Account not opted into USDC ASA', targetAssetId, '- Adding Opt-In transaction');
+      const optInTxn = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
         sender: connectedAddress,
-        receiver: receiverAddress,
-        amount: amountMicroUSDC,
+        receiver: connectedAddress,
+        amount: 0,
         assetIndex: targetAssetId,
-        suggestedParams,
+        suggestedParams: { ...suggestedParams },
+        note: new Uint8Array(Buffer.from(`Route402:OptInUSDC:${Date.now()}`)),
       });
-    } else {
-      // Fallback to ALGO Payment Transaction
-      txn = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-        sender: connectedAddress,
-        receiver: receiverAddress,
-        amount: Math.max(1000, amountMicroUSDC), // microAlgos
-        suggestedParams,
-        note: new Uint8Array(Buffer.from(`Route402:x402Payment:${Date.now()}`)),
-      });
+      txns.push(optInTxn);
+      txnsToSign.push({ txn: optInTxn, signers: [connectedAddress] });
     }
 
-    // Format transaction for Pera Wallet Connect SDK
-    const txnsToSign = [
-      {
-        txn,
-        signers: [connectedAddress],
-      },
-    ];
+    // 2. USDC ASA Transfer Transaction (Agent -> Provider)
+    const usdcTxn = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+      sender: connectedAddress,
+      receiver: receiverAddress,
+      amount: amountMicroUSDC,
+      assetIndex: targetAssetId,
+      suggestedParams: { ...suggestedParams },
+      note: new Uint8Array(Buffer.from(`Route402:x402USDCPayment:${Date.now()}`)),
+    });
+    txns.push(usdcTxn);
+    txnsToSign.push({ txn: usdcTxn, signers: [connectedAddress] });
 
-    // Trigger Pera Wallet signature prompt modal/notification
+    if (txns.length > 1) {
+      algosdk.assignGroupID(txns);
+    }
+
     console.log('[Pera Wallet] Requesting user transaction signature from connected wallet:', connectedAddress);
     const signedTxns = await peraWallet.signTransaction([txnsToSign]);
 
@@ -117,23 +124,28 @@ export async function sendPeraPaymentTransaction(
       throw new Error('Transaction signature was cancelled by user in Pera Wallet.');
     }
 
-    // Submit signed transaction to Algorand network
-    console.log('[Pera Wallet] Submitting signed transaction to Algorand network...');
-    const sendResult = await algodClient.sendRawTransaction(signedTxns[0]).do();
-    const txId = (sendResult as any)?.txId || (sendResult as any)?.txid || txn.txID();
+    console.log('[Pera Wallet] Submitting signed USDC transaction to Algorand network...');
+    const sendResult = await algodClient.sendRawTransaction(signedTxns).do();
+    const mainTxId = usdcTxn.txID();
+    const txId = (sendResult as any)?.txId || (sendResult as any)?.txid || mainTxId;
 
     const explorerUrl = `https://lora.algokit.io/${network}/transaction/${txId}`;
 
     return {
       success: true,
       txId,
-      txIds: [txId],
+      txIds: txns.map((t) => t.txID()),
       explorerUrl,
     };
   } catch (err: any) {
     console.error('[Pera Wallet Transaction Error]', err);
-    const errorMsg =
+    let errorMsg =
       err?.message || err?.data?.message || 'Transaction signing failed or was cancelled in Pera Wallet.';
+
+    if (errorMsg.includes('underfunded') || errorMsg.includes('below min') || errorMsg.includes('balance')) {
+      errorMsg = `Insufficient USDC balance in connected wallet. Agent payment requires ${(amountMicroUSDC / 1000000).toFixed(4)} USDC (ASA #${network === 'mainnet' ? 31566704 : 10458941}).`;
+    }
+
     return {
       success: false,
       error: errorMsg,
@@ -142,7 +154,8 @@ export async function sendPeraPaymentTransaction(
 }
 
 /**
- * Creates and prompts Pera Wallet to sign a Composite Atomic Group Transaction (2 Providers)
+ * Creates and prompts Pera Wallet to sign a Composite Atomic Group USDC Transaction (2 Providers)
+ * ALWAYS transfers USDC ASA to both providers.
  */
 export async function sendPeraCompositeTransaction(
   connectedAddress: string,
@@ -162,73 +175,72 @@ export async function sendPeraCompositeTransaction(
     const algodClient = new algosdk.Algodv2('', serverUrl, 443);
     const suggestedParams = await algodClient.getTransactionParams().do();
 
-    // Check USDC opt-in
-    let isUsdcOptedIn = false;
     const targetAssetId = network === 'mainnet' ? 31566704 : 10458941;
 
+    // Check USDC opt-in
+    let isUsdcOptedIn = false;
     try {
-      const accountInfo = await algodClient.accountInformation(connectedAddress).do();
-      isUsdcOptedIn = accountInfo.assets?.some(
-        (a: any) => a['asset-id'] === targetAssetId
-      ) || false;
+      const accountInfo: any = await algodClient.accountInformation(connectedAddress).do();
+      const assets = accountInfo.assets || accountInfo['assets'] || [];
+      isUsdcOptedIn = assets.some(
+        (a: any) =>
+          Number(a['asset-id'] || a['assetId'] || a['asset-index'] || 0) === targetAssetId
+      );
     } catch (e) {
-      // Silent fallback
+      console.warn('[Pera Wallet Composite] Account info check failed:', e);
     }
 
-    let txn1: algosdk.Transaction;
-    let txn2: algosdk.Transaction;
+    const txns: algosdk.Transaction[] = [];
+    const txnsToSign: { txn: algosdk.Transaction; signers: string[] }[] = [];
 
-    if (isUsdcOptedIn) {
-      txn1 = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+    // 1. Opt-In if not opted in
+    if (!isUsdcOptedIn) {
+      const optInTxn = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
         sender: connectedAddress,
-        receiver: receiver1Address,
-        amount: amount1MicroUSDC,
+        receiver: connectedAddress,
+        amount: 0,
         assetIndex: targetAssetId,
-        suggestedParams,
+        suggestedParams: { ...suggestedParams },
+        note: new Uint8Array(Buffer.from(`Route402:OptInUSDC:${Date.now()}`)),
       });
-
-      txn2 = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
-        sender: connectedAddress,
-        receiver: receiver2Address,
-        amount: amount2MicroUSDC,
-        assetIndex: targetAssetId,
-        suggestedParams,
-      });
-    } else {
-      txn1 = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-        sender: connectedAddress,
-        receiver: receiver1Address,
-        amount: Math.max(1000, amount1MicroUSDC),
-        suggestedParams,
-        note: new Uint8Array(Buffer.from(`Route402:CompositeStep1:${Date.now()}`)),
-      });
-
-      txn2 = algosdk.makePaymentTxnWithSuggestedParamsFromObject({
-        sender: connectedAddress,
-        receiver: receiver2Address,
-        amount: Math.max(1000, amount2MicroUSDC),
-        suggestedParams,
-        note: new Uint8Array(Buffer.from(`Route402:CompositeStep2:${Date.now()}`)),
-      });
+      txns.push(optInTxn);
+      txnsToSign.push({ txn: optInTxn, signers: [connectedAddress] });
     }
+
+    // 2. Step 1 Provider USDC transfer
+    const txn1 = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+      sender: connectedAddress,
+      receiver: receiver1Address,
+      amount: amount1MicroUSDC,
+      assetIndex: targetAssetId,
+      suggestedParams: { ...suggestedParams },
+      note: new Uint8Array(Buffer.from(`Route402:CompositeStep1USDC:${Date.now()}`)),
+    });
+    txns.push(txn1);
+    txnsToSign.push({ txn: txn1, signers: [connectedAddress] });
+
+    // 3. Step 2 Provider USDC transfer
+    const txn2 = algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+      sender: connectedAddress,
+      receiver: receiver2Address,
+      amount: amount2MicroUSDC,
+      assetIndex: targetAssetId,
+      suggestedParams: { ...suggestedParams },
+      note: new Uint8Array(Buffer.from(`Route402:CompositeStep2USDC:${Date.now()}`)),
+    });
+    txns.push(txn2);
+    txnsToSign.push({ txn: txn2, signers: [connectedAddress] });
 
     // Bind into Algorand Atomic Group
-    const groupTxns = [txn1, txn2];
-    algosdk.assignGroupID(groupTxns);
-
-    const txnsToSign = [
-      { txn: txn1, signers: [connectedAddress] },
-      { txn: txn2, signers: [connectedAddress] },
-    ];
+    algosdk.assignGroupID(txns);
 
     console.log('[Pera Wallet] Requesting Atomic Group signature from Pera Wallet...');
     const signedTxns = await peraWallet.signTransaction([txnsToSign]);
 
-    if (!signedTxns || signedTxns.length < 2) {
+    if (!signedTxns || signedTxns.length < txns.length) {
       throw new Error('Atomic Group signing was cancelled by user in Pera Wallet.');
     }
 
-    // Submit signed atomic transaction group
     console.log('[Pera Wallet] Submitting signed atomic group to Algorand network...');
     const sendResult = await algodClient.sendRawTransaction(signedTxns).do();
     const tx1Id = txn1.txID();
@@ -240,17 +252,23 @@ export async function sendPeraCompositeTransaction(
     return {
       success: true,
       txId: tx1Id,
-      txIds: [tx1Id, tx2Id],
+      txIds: txns.map((t) => t.txID()),
       groupId,
       explorerUrl,
     };
   } catch (err: any) {
     console.error('[Pera Wallet Composite Transaction Error]', err);
-    const errorMsg =
+    let errorMsg =
       err?.message || err?.data?.message || 'Atomic group transaction cancelled in Pera Wallet.';
+
+    if (errorMsg.includes('underfunded') || errorMsg.includes('below min') || errorMsg.includes('balance')) {
+      errorMsg = `Insufficient USDC balance in connected wallet for composite task.`;
+    }
+
     return {
       success: false,
       error: errorMsg,
     };
   }
 }
+
