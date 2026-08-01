@@ -164,9 +164,22 @@ export const ProvidersView: React.FC<ProvidersViewProps> = ({
               </div>
 
               <div>
-                <label className="block text-zinc-400 font-medium mb-1">
-                  Advertised Price: <strong className="font-mono-num text-[#FF5C5C]">{price.toLocaleString()} µUSDC</strong> (${(price / 1000000).toFixed(3)})
-                </label>
+                <div className="flex items-center justify-between text-zinc-400 font-medium mb-1.5">
+                  <label>Advertised Price</label>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      min="0"
+                      max="1000000"
+                      step="500"
+                      value={price}
+                      onChange={(e) => setPrice(Math.max(0, Number(e.target.value)))}
+                      className="w-28 bg-[#050505] border border-zinc-800 focus:border-[#FF0A16] focus:outline-none rounded-lg px-2.5 py-1 font-mono-num text-right font-bold text-[#FF5C5C] text-xs transition-colors"
+                      placeholder="5000"
+                    />
+                    <span className="text-xs font-mono-num text-zinc-400">µUSDC</span>
+                  </div>
+                </div>
                 <input
                   type="range"
                   min="2000"
@@ -176,6 +189,9 @@ export const ProvidersView: React.FC<ProvidersViewProps> = ({
                   onChange={(e) => setPrice(Number(e.target.value))}
                   className="w-full accent-[#FF0A16] cursor-pointer"
                 />
+                <div className="text-[10px] text-zinc-500 font-mono-num text-right mt-1">
+                  ≈ ${(price / 1000000).toFixed(6)} USDC
+                </div>
               </div>
 
               <div className="mt-6 flex justify-end gap-2 pt-2 border-t border-zinc-800">

@@ -787,11 +787,21 @@ export default function App() {
               </div>
 
               <div>
-                <div className="flex justify-between text-zinc-400 font-medium mb-1">
+                <div className="flex items-center justify-between text-zinc-400 font-medium mb-1.5">
                   <span>Max Price Ceiling</span>
-                  <span className="font-mono-num font-bold text-[#FF5C5C]">
-                    {quickMaxPrice.toLocaleString()} µUSDC
-                  </span>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      min="0"
+                      max="1000000"
+                      step="100"
+                      value={quickMaxPrice}
+                      onChange={(e) => setQuickMaxPrice(Math.max(0, Number(e.target.value)))}
+                      className="w-28 bg-[#050505] border border-zinc-800 focus:border-[#FF0A16] focus:outline-none rounded-lg px-2.5 py-1 font-mono-num text-right font-bold text-[#FF5C5C] text-xs transition-colors"
+                      placeholder="1000"
+                    />
+                    <span className="text-xs font-mono-num text-zinc-400">µUSDC</span>
+                  </div>
                 </div>
                 <input
                   type="range"
@@ -802,6 +812,9 @@ export default function App() {
                   onChange={(e) => setQuickMaxPrice(Number(e.target.value))}
                   className="w-full accent-[#FF0A16] cursor-pointer"
                 />
+                <div className="text-[10px] text-zinc-500 font-mono-num text-right mt-1">
+                  ≈ ${(quickMaxPrice / 1000000).toFixed(6)} USDC
+                </div>
               </div>
 
               <div className="pt-3 border-t border-zinc-800 flex justify-end gap-2">
