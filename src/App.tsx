@@ -53,6 +53,15 @@ export default function App() {
 
   // Pera Wallet Connected State & Live Balances
   const [connectedWallet, setConnectedWallet] = useState<string | null>(null);
+  const [walletAccountName, setWalletAccountNameState] = useState<string>(() => {
+    return localStorage.getItem('route402_pera_account_name') || 'Pera Account 1';
+  });
+
+  const setWalletAccountName = (name: string) => {
+    setWalletAccountNameState(name);
+    localStorage.setItem('route402_pera_account_name', name);
+  };
+
   const [walletAlgoBalance, setWalletAlgoBalance] = useState<number>(0);
   const [walletUsdcBalance, setWalletUsdcBalance] = useState<number>(0);
   const [isPeraModalOpen, setIsPeraModalOpen] = useState<boolean>(false);
@@ -109,8 +118,11 @@ export default function App() {
     }
   };
 
-  const handleConnectPeraWallet = (address: string) => {
+  const handleConnectPeraWallet = (address: string, accountName?: string) => {
     setConnectedWallet(address);
+    if (accountName) {
+      setWalletAccountName(accountName);
+    }
     refreshWalletBalance(address);
   };
 
@@ -582,6 +594,8 @@ export default function App() {
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           connectedWallet={connectedWallet}
+          walletAccountName={walletAccountName}
+          setWalletAccountName={setWalletAccountName}
           walletAlgoBalance={walletAlgoBalance}
           walletUsdcBalance={walletUsdcBalance}
           openPeraModal={() => setIsPeraModalOpen(true)}
@@ -759,6 +773,7 @@ export default function App() {
         onClose={() => setIsPeraModalOpen(false)}
         onConnect={handleConnectPeraWallet}
         network={network}
+        currentAccountName={walletAccountName}
       />
     </div>
   );

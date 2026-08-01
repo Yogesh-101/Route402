@@ -15,8 +15,9 @@ import {
 interface PeraWalletModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onConnect: (address: string) => void;
+  onConnect: (address: string, accountName?: string) => void;
   network: 'testnet' | 'mainnet';
+  currentAccountName?: string;
 }
 
 let peraWalletInstance: PeraWalletConnect | null = null;
@@ -35,8 +36,10 @@ export const PeraWalletModal: React.FC<PeraWalletModalProps> = ({
   onClose,
   onConnect,
   network,
+  currentAccountName = 'Pera Account 1',
 }) => {
   const [inputAddress, setInputAddress] = useState<string>('');
+  const [accountNameInput, setAccountNameInput] = useState<string>(currentAccountName);
   const [isConnecting, setIsConnecting] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'pera_connect' | 'address_input'>('pera_connect');
@@ -57,7 +60,7 @@ export const PeraWalletModal: React.FC<PeraWalletModalProps> = ({
       });
 
       if (accounts && accounts.length > 0) {
-        onConnect(accounts[0]);
+        onConnect(accounts[0], accountNameInput);
         onClose();
       } else {
         setErrorMsg('No accounts selected from Pera Wallet.');
@@ -81,7 +84,7 @@ export const PeraWalletModal: React.FC<PeraWalletModalProps> = ({
       return;
     }
 
-    onConnect(cleanAddr);
+    onConnect(cleanAddr, accountNameInput);
     onClose();
   };
 
@@ -162,6 +165,20 @@ export const PeraWalletModal: React.FC<PeraWalletModalProps> = ({
                     Scan QR code with Pera Wallet Mobile App or pair with Pera Web Extension.
                   </p>
                 </div>
+
+                <div className="w-full text-left mt-1">
+                  <label className="block text-zinc-300 font-medium mb-1 text-[11px]">
+                    Account Name (as set in Pera Wallet)
+                  </label>
+                  <input
+                    type="text"
+                    value={accountNameInput}
+                    onChange={(e) => setAccountNameInput(e.target.value)}
+                    placeholder="e.g. Yogesh Main, Pera Account 1"
+                    className="w-full bg-[#121215] border border-zinc-700 rounded-xl p-2.5 text-xs text-white placeholder-zinc-500 focus:outline-none focus:border-amber-400 font-inter"
+                  />
+                </div>
+
                 <button
                   onClick={handlePeraSdkConnect}
                   disabled={isConnecting}
@@ -176,7 +193,20 @@ export const PeraWalletModal: React.FC<PeraWalletModalProps> = ({
             <form onSubmit={handleManualAddressSubmit} className="space-y-4">
               <div>
                 <label className="block text-zinc-300 font-medium mb-1.5">
-                  Algorand Testnet Address
+                  Account Name (as set in Pera Wallet)
+                </label>
+                <input
+                  type="text"
+                  value={accountNameInput}
+                  onChange={(e) => setAccountNameInput(e.target.value)}
+                  placeholder="e.g. Yogesh Main, Pera Account 1"
+                  className="w-full bg-[#050505] border border-zinc-800 rounded-xl p-2.5 text-xs text-zinc-100 placeholder-zinc-600 focus:outline-none focus:ring-1 focus:ring-[#FF0A16] mb-3"
+                />
+              </div>
+
+              <div>
+                <label className="block text-zinc-300 font-medium mb-1.5">
+                  Algorand Address
                 </label>
                 <input
                   type="text"
