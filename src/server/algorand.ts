@@ -1,4 +1,8 @@
 import algosdk from 'algosdk';
+import * as algokit from '@algorandfoundation/algokit-utils';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 export interface AlgorandGroupResult {
   groupId: string;
@@ -8,15 +12,39 @@ export interface AlgorandGroupResult {
   finalityMs: number;
 }
 
-// Algorand TestNet Config
-const ALGOD_SERVER = 'https://testnet-api.algonode.cloud';
-const ALGOD_PORT = 443;
-const ALGOD_TOKEN = '';
+// Algorand Node Config from Environment Variables via AlgoKit
+const ALGOD_SERVER = process.env.ALGOD_SERVER || 'https://testnet-api.algonode.cloud';
+const ALGOD_PORT = Number(process.env.ALGOD_PORT) || 443;
+const ALGOD_TOKEN = process.env.ALGOD_TOKEN || '';
+export const ALGORAND_NETWORK = (process.env.ALGORAND_NETWORK || 'testnet') as 'testnet' | 'mainnet';
 
-export const algodClient = new algosdk.Algodv2(ALGOD_TOKEN, ALGOD_SERVER, ALGOD_PORT);
+// Initialize Algod client using AlgoKit
+export const algodClient = algokit.getAlgoClient({
+  server: ALGOD_SERVER,
+  port: ALGOD_PORT,
+  token: ALGOD_TOKEN,
+});
 
-// Valid Algorand Accounts for Demo & Fee Sponsorship
-export const SPONSOR_ACCOUNT = algosdk.generateAccount();
+// Initialize Sponsor Vault Account via AlgoKit / algosdk
+function initializeSponsorAccount(): algosdk.Account {
+  const mnemonic = process.env.SPONSOR_MNEMONIC ? process.env.SPONSOR_MNEMONIC.trim() : '';
+  if (mnemonic && mnemonic.split(' ').length >= 24) {
+    try {
+      const algoKitAccount = algokit.mnemonicAccount(mnemonic);
+      const addr = algoKitAccount.addr.toString();
+      console.log(`[Route402 Algorand Vault / AlgoKit] Loaded real Sponsor Vault account from .env: ${addr}`);
+      return algoKitAccount;
+    } catch (err) {
+      console.warn('[Route402 Algorand Vault] Failed to decode SPONSOR_MNEMONIC via AlgoKit, falling back to generated account.');
+    }
+  }
+  const demoAccount = algosdk.generateAccount();
+  const demoAddr = algosdk.encodeAddress(demoAccount.addr.publicKey);
+  console.log(`[Route402 Algorand Vault / AlgoKit] Operating with generated demo Sponsor Vault account: ${demoAddr}`);
+  return demoAccount;
+}
+
+export const SPONSOR_ACCOUNT = initializeSponsorAccount();
 export const AGENT_ACCOUNT = algosdk.generateAccount();
 export const PROVIDER_ACCOUNT = algosdk.generateAccount();
 
@@ -45,7 +73,7 @@ export async function createAlgorandPaymentGroup(
   senderAddress: string = DEFAULT_AGENT_ADDRESS,
   receiverAddress: string = DEFAULT_PROVIDER_ADDRESS,
   amountMicroUSDC: number = 10000,
-  network: 'testnet' | 'mainnet' = 'testnet'
+  network: 'testnet' | 'mainnet' = ALGORAND_NETWORK
 ): Promise<AlgorandGroupResult> {
   const startTime = Date.now();
 
@@ -102,7 +130,7 @@ export async function createAlgorandPaymentGroup(
   return {
     groupId,
     txIds: [asaTxId, feeTxId],
-    explorerUrl: `https://testnet.explorer.perawallet.app/tx/${asaTxId}`,
+    explorerUrl: `https://lora.algokit.io/${network}/transaction/${asaTxId}`,
     feeSponsored: true,
     finalityMs,
   };
@@ -166,7 +194,7 @@ export async function createAlgorandCompositeGroup(
   return {
     groupId,
     txIds: [tx1Id, tx2Id, sponsorTxId],
-    explorerUrl: `https://testnet.explorer.perawallet.app/tx/${tx1Id}`,
+    explorerUrl: `https://lora.algokit.io/testnet/transaction/${tx1Id}`,
     feeSponsored: true,
     finalityMs: 1650,
   };

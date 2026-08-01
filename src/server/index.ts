@@ -4,6 +4,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 import { INITIAL_PROVIDERS, INITIAL_DECISIONS, INITIAL_PAYMENTS } from '../data/initialData';
 import { Provider, RouteRequest, RouteDecision, PaymentRecord, SavingsSnapshot, SystemEvent } from '../types';
 import { CircuitBreakerManager } from './circuitBreaker';
+import { Route402Database } from './db';
 import { evaluateAndScoreCandidates, generateDecisionExplanation } from './routingEngine';
 import {
   createAlgorandPaymentGroup,
@@ -29,10 +30,15 @@ app.use((req, res, next) => {
   next();
 });
 
-// Central Server State Managers
+// Central Server State Managers with SQLite Database Persistence
 const circuitManager = new CircuitBreakerManager(INITIAL_PROVIDERS);
-let decisions: RouteDecision[] = [...INITIAL_DECISIONS];
-let payments: PaymentRecord[] = [...INITIAL_PAYMENTS];
+Route402Database.seedIfEmpty(INITIAL_PROVIDERS, INITIAL_DECISIONS, INITIAL_PAYMENTS);
+
+let decisions: RouteDecision[] = Route402Database.getAllDecisions();
+if (decisions.length === 0) decisions = [...INITIAL_DECISIONS];
+
+let payments: PaymentRecord[] = Route402Database.getAllPayments();
+if (payments.length === 0) payments = [...INITIAL_PAYMENTS];
 
 // Calculate Savings Snapshot
 function calculateSavings(): SavingsSnapshot {
@@ -195,6 +201,7 @@ app.post('/v1/route', async (req, res) => {
         explorerUrl: null,
       };
       payments.unshift(paymentRecord);
+      Route402Database.savePayment(paymentRecord);
 
       broadcastEvent({
         type: 'PAYMENT_REFUSED',
@@ -251,6 +258,7 @@ app.post('/v1/route', async (req, res) => {
     fallbackChain,
   };
   decisions.unshift(routeDecision);
+  Route402Database.saveDecision(routeDecision);
 
   const paymentRecord: PaymentRecord = {
     id: `pay_${Date.now().toString(36)}`,
@@ -268,6 +276,8 @@ app.post('/v1/route', async (req, res) => {
     explorerUrl: algorandResult.explorerUrl,
   };
   payments.unshift(paymentRecord);
+  Route402Database.savePayment(paymentRecord);
+  circuitManager.recordEarnings(winningProvObj.id, winningProvObj.advertisedPriceMicroUSDC);
 
   // Broadcast WebSocket Events
   broadcastEvent({
@@ -344,6 +354,7 @@ app.post('/v1/composite', async (req, res) => {
     explorerUrl: compositeResult.explorerUrl,
   };
   payments.unshift(paymentRecord);
+  Route402Database.savePayment(paymentRecord);
 
   broadcastEvent({
     type: 'PAYMENT_SETTLED',

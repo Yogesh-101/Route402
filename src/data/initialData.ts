@@ -7,7 +7,7 @@ export const INITIAL_PROVIDERS: Provider[] = [
     endpoint: 'https://api.alpha-ai.net/v1/x402/summarize',
     capabilities: ['text.summarize', 'audio.transcribe'],
     advertisedPriceMicroUSDC: 8000, // $0.008
-    walletAddress: 'ALPHAX402AGENCY27K9V32LMN54PQRSTUVWXYZ1234567890123456789',
+    walletAddress: 'WMG2XO3YBT3272YAOMVT6ZVRIES3B2GNPNMMSQM6G5ZWC77YIYXFID3PAY',
     registeredAt: Date.now() - 86400000 * 14,
     latencyP50Ms: 1120,
     latencyP95Ms: 2350,
@@ -32,7 +32,7 @@ export const INITIAL_PROVIDERS: Provider[] = [
     endpoint: 'https://api.beta-fast.io/x402/summarize',
     capabilities: ['text.summarize', 'code.review'],
     advertisedPriceMicroUSDC: 12000, // $0.012
-    walletAddress: 'BETAX402SPEEDRUNNER459012345678901234567890123456789',
+    walletAddress: '2E3L3EZNON23FGZ476YZ6OKPK2ECQQ4TKEOMOH6ZTSQ2OTLK7QIQ6JMG54',
     registeredAt: Date.now() - 86400000 * 10,
     latencyP50Ms: 380,
     latencyP95Ms: 720,
@@ -57,7 +57,7 @@ export const INITIAL_PROVIDERS: Provider[] = [
     endpoint: 'https://api.gamma-deep.com/x402/v1',
     capabilities: ['text.summarize', 'code.review', 'data.enrichment'],
     advertisedPriceMicroUSDC: 24000, // $0.024
-    walletAddress: 'GAMMAX402ENTERPRISE890123456789012345678901234567890',
+    walletAddress: 'APZQHTRPFMB2X4VZGNA4XO2TJWBJHXEJOQTVH4PJXQ2PCY3VUJPPKRY36A',
     registeredAt: Date.now() - 86400000 * 30,
     latencyP50Ms: 210,
     latencyP95Ms: 480,
@@ -82,7 +82,7 @@ export const INITIAL_PROVIDERS: Provider[] = [
     endpoint: 'https://api.deltasec.org/x402/audit',
     capabilities: ['code.review', 'data.enrichment'],
     advertisedPriceMicroUSDC: 16000, // $0.016
-    walletAddress: 'DELTA402SECURITYAUDIT12345678901234567890123456789',
+    walletAddress: 'WS7LV5DTW2X3WMVRDD5GSJVHWOYTZRT2FLSZOPOWB2FSLYJAC2RSQXLVPE',
     registeredAt: Date.now() - 86400000 * 7,
     latencyP50Ms: 450,
     latencyP95Ms: 890,
@@ -107,7 +107,7 @@ export const INITIAL_PROVIDERS: Provider[] = [
     endpoint: 'https://media.epsilon-x402.ai/generate',
     capabilities: ['image.generate', 'audio.transcribe'],
     advertisedPriceMicroUSDC: 35000, // $0.035
-    walletAddress: 'EPSILON402GENMEDIA789012345678901234567890123456789',
+    walletAddress: 'RULI3A6QJMVPTQGHK3CUSBV67QFBEKZXKIGIKTJUHKZHPSKD4X33VZJ26Y',
     registeredAt: Date.now() - 86400000 * 5,
     latencyP50Ms: 1420,
     latencyP95Ms: 2900,
@@ -253,7 +253,7 @@ export const INITIAL_PAYMENTS: PaymentRecord[] = [
     settledAt: Date.now() - 42000,
     finalityMs: 2410,
     status: 'settled',
-    explorerUrl: 'https://testnet.explorer.perawallet.app/tx/G7K9L2M5N1P3Q8R4S0T2U6V1W5X9Y3Z7A1B5C9D3E7F1',
+    explorerUrl: 'https://lora.algokit.io/testnet/transaction/G7K9L2M5N1P3Q8R4S0T2U6V1W5X9Y3Z7A1B5C9D3E7F1',
   },
   {
     id: 'pay_01J8A881M9',
@@ -268,7 +268,7 @@ export const INITIAL_PAYMENTS: PaymentRecord[] = [
     settledAt: Date.now() - 118000,
     finalityMs: 2520,
     status: 'settled',
-    explorerUrl: 'https://testnet.explorer.perawallet.app/tx/K1M5P9R3T7V1X5Z9B3D7F1H5J9L3N7P1R5T9V3X7Z1',
+    explorerUrl: 'https://lora.algokit.io/testnet/transaction/K1M5P9R3T7V1X5Z9B3D7F1H5J9L3N7P1R5T9V3X7Z1',
   },
   {
     id: 'pay_01J8A720REF',

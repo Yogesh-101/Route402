@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Search,
   Wallet,
@@ -6,8 +6,12 @@ import {
   Radio,
   Plus,
   Zap,
-  ArrowRightLeft,
   CheckCircle2,
+  LogOut,
+  ChevronDown,
+  Copy,
+  Check,
+  ExternalLink,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -16,6 +20,11 @@ interface NavbarProps {
   openAgentModal: () => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  connectedWallet: string | null;
+  walletAlgoBalance: number;
+  walletUsdcBalance: number;
+  openPeraModal: () => void;
+  onDisconnectWallet: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -24,7 +33,28 @@ export const Navbar: React.FC<NavbarProps> = ({
   openAgentModal,
   searchQuery,
   setSearchQuery,
+  connectedWallet,
+  walletAlgoBalance,
+  walletUsdcBalance,
+  openPeraModal,
+  onDisconnectWallet,
 }) => {
+  const [isMenuOpen, setIsMenuOpen] = useState<boolean>(false);
+  const [copied, setCopied] = useState<boolean>(false);
+
+  const formatAddress = (addr: string) => {
+    if (addr.length < 12) return addr;
+    return `${addr.substring(0, 5)}...${addr.substring(addr.length - 4)}`;
+  };
+
+  const handleCopy = () => {
+    if (connectedWallet) {
+      navigator.clipboard.writeText(connectedWallet);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   return (
     <header className="h-16 bg-[#09090b]/90 backdrop-blur-md border-b border-zinc-800/80 px-6 flex items-center justify-between sticky top-0 z-10">
       {/* Search Input */}
@@ -56,7 +86,7 @@ export const Navbar: React.FC<NavbarProps> = ({
         <div className="flex items-center bg-[#121215] border border-zinc-800 p-0.5 rounded-lg text-xs font-medium font-mono-num">
           <button
             onClick={() => setNetwork('testnet')}
-            className={`px-2.5 py-1 rounded-md transition-all ${
+            className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
               network === 'testnet'
                 ? 'bg-[#FF0A16] text-white font-semibold shadow-xs shadow-red-900/40'
                 : 'text-zinc-400 hover:text-zinc-100'
@@ -66,7 +96,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
           <button
             onClick={() => setNetwork('mainnet')}
-            className={`px-2.5 py-1 rounded-md transition-all ${
+            className={`px-2.5 py-1 rounded-md transition-all cursor-pointer ${
               network === 'mainnet'
                 ? 'bg-emerald-600 text-white font-semibold shadow-xs shadow-emerald-900/40'
                 : 'text-zinc-400 hover:text-zinc-100'
@@ -76,23 +106,94 @@ export const Navbar: React.FC<NavbarProps> = ({
           </button>
         </div>
 
-        {/* Wallet Balance Display */}
-        <div className="flex items-center gap-2.5 bg-[#121215] border border-zinc-800 px-3 py-1.5 rounded-xl">
-          <Wallet className="w-4 h-4 text-[#FF0A16]" />
-          <div className="flex items-center gap-3 text-xs">
-            <div>
-              <span className="text-[10px] text-zinc-500 block uppercase font-mono-num font-semibold">
-                Agent Balance
-              </span>
-              <span className="font-mono-num font-semibold text-zinc-200">
-                0.00 <span className="text-[10px] text-zinc-400">ALGO</span> | $4.25 <span className="text-[10px] text-[#FF5C5C]">USDC</span>
-              </span>
-            </div>
-            <span className="px-1.5 py-0.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[10px] font-semibold rounded font-mono-num flex items-center gap-1">
-              <CheckCircle2 className="w-3 h-3 text-emerald-400" /> Fee Sponsored
-            </span>
+        {/* Pera Wallet Integration Container */}
+        {connectedWallet ? (
+          <div className="relative">
+            <button
+              onClick={() => setIsMenuOpen(!isMenuOpen)}
+              className="flex items-center gap-2.5 bg-[#121215] hover:bg-[#18181c] border border-amber-500/30 hover:border-amber-500/60 px-3 py-1.5 rounded-xl transition-all cursor-pointer text-xs font-inter group"
+            >
+              {/* Pera Yellow Wallet Icon */}
+              <div className="w-5 h-5 rounded-lg bg-[#FFE600] flex items-center justify-center text-zinc-950 font-bold shadow-xs">
+                <Wallet className="w-3.5 h-3.5" />
+              </div>
+
+              <div className="text-left font-mono-num">
+                <div className="flex items-center gap-1.5">
+                  <span className="font-semibold text-white">
+                    {formatAddress(connectedWallet)}
+                  </span>
+                  <span className="px-1.5 py-0.2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] font-semibold rounded font-mono-num flex items-center gap-1">
+                    <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" /> Pera
+                  </span>
+                </div>
+                <span className="text-[10px] text-zinc-400 font-semibold block">
+                  {walletAlgoBalance.toFixed(2)}{' '}
+                  <span className="text-[9px] text-amber-400">ALGO</span> | $
+                  {walletUsdcBalance.toFixed(2)}{' '}
+                  <span className="text-[9px] text-[#FF5C5C]">USDC</span>
+                </span>
+              </div>
+
+              <ChevronDown className="w-3.5 h-3.5 text-zinc-400 group-hover:text-white transition-transform" />
+            </button>
+
+            {/* Wallet Options Popover Menu */}
+            {isMenuOpen && (
+              <div className="absolute right-0 mt-2 w-64 bg-[#09090b] border border-zinc-800 rounded-xl shadow-2xl p-3 z-50 text-xs font-inter space-y-2.5 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="p-2.5 bg-[#050505] rounded-lg border border-zinc-800/80">
+                  <span className="text-[10px] text-zinc-500 uppercase font-mono-num font-bold block mb-1">
+                    Connected Pera Address
+                  </span>
+                  <div className="flex items-center justify-between text-zinc-200 font-mono text-[11px] break-all">
+                    <span>{formatAddress(connectedWallet)}</span>
+                    <button
+                      onClick={handleCopy}
+                      className="p-1 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                      title="Copy Address"
+                    >
+                      {copied ? (
+                        <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between px-1 text-zinc-400 text-[11px]">
+                  <span>Lora Explorer:</span>
+                  <a
+                    href={`https://lora.algokit.io/${network}/account/${connectedWallet}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[#FF5C5C] hover:underline flex items-center gap-1 font-semibold"
+                  >
+                    View Account <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    onDisconnectWallet();
+                  }}
+                  className="w-full py-2 px-3 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-lg text-xs font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer"
+                >
+                  <LogOut className="w-3.5 h-3.5" /> Disconnect Pera Wallet
+                </button>
+              </div>
+            )}
           </div>
-        </div>
+        ) : (
+          <button
+            onClick={openPeraModal}
+            className="flex items-center gap-2 bg-[#FFE600] hover:bg-[#E6CE00] text-zinc-950 font-bold px-3.5 py-1.5 rounded-xl text-xs font-inter shadow-[0_0_15px_rgba(255,230,0,0.25)] transition-all active:scale-98 cursor-pointer"
+          >
+            <Wallet className="w-4 h-4 text-zinc-950" />
+            <span>Connect Pera Wallet</span>
+          </button>
+        )}
 
         {/* Quick Action Button */}
         <button

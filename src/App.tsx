@@ -14,6 +14,8 @@ import { AnalyticsView } from './components/Views/AnalyticsView';
 import { SettingsView } from './components/Views/SettingsView';
 import { ChaosSimulator } from './components/ChaosSimulator';
 import { CompositeTaskModal } from './components/CompositeTaskModal';
+import { PeraWalletModal } from './components/PeraWalletModal';
+import { PeraWalletConnect } from '@perawallet/connect';
 
 import {
   INITIAL_PROVIDERS,
@@ -49,6 +51,12 @@ export default function App() {
   const [network, setNetwork] = useState<'testnet' | 'mainnet'>('testnet');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
+  // Pera Wallet Connected State & Live Balances
+  const [connectedWallet, setConnectedWallet] = useState<string | null>(null);
+  const [walletAlgoBalance, setWalletAlgoBalance] = useState<number>(0);
+  const [walletUsdcBalance, setWalletUsdcBalance] = useState<number>(0);
+  const [isPeraModalOpen, setIsPeraModalOpen] = useState<boolean>(false);
+
   // Core reactive engine state
   const [providers, setProviders] = useState<Provider[]>(INITIAL_PROVIDERS);
   const [decisions, setDecisions] = useState<RouteDecision[]>(INITIAL_DECISIONS);
@@ -69,6 +77,84 @@ export default function App() {
   const [quickCapability, setQuickCapability] = useState<CapabilityType>('text.summarize');
   const [quickPriority, setQuickPriority] = useState<PriorityProfile>('balanced');
   const [quickMaxPrice, setQuickMaxPrice] = useState<number>(20000);
+
+  // Fetch live ALGO & USDC balances from Algorand node for connected address
+  const refreshWalletBalance = async (addr: string) => {
+    try {
+      const domain =
+        network === 'mainnet'
+          ? 'mainnet-api.algonode.cloud'
+          : 'testnet-api.algonode.cloud';
+      const res = await fetch(`https://${domain}/v2/accounts/${addr}`);
+      if (res.ok) {
+        const data = await res.json();
+        const microAlgo = data.amount || 0;
+        setWalletAlgoBalance(microAlgo / 1000000);
+
+        // Algorand USDC ASA IDs:
+        // MainNet = 31566704
+        // TestNet = 10458941
+        const targetUsdcAssetId = network === 'mainnet' ? 31566704 : 10458941;
+        const usdcObj = data.assets?.find(
+          (a: any) =>
+            a['asset-id'] === targetUsdcAssetId ||
+            a['asset-id'] === 31566704 ||
+            a['asset-id'] === 10458941
+        );
+        setWalletUsdcBalance(usdcObj ? (usdcObj.amount || 0) / 1000000 : 0);
+        return;
+      }
+    } catch (e) {
+      console.warn('[Route402] Balance lookup error for address:', addr);
+    }
+  };
+
+  const handleConnectPeraWallet = (address: string) => {
+    setConnectedWallet(address);
+    refreshWalletBalance(address);
+  };
+
+  const handleDisconnectPeraWallet = async () => {
+    try {
+      const peraWallet = new PeraWalletConnect();
+      await peraWallet.disconnect();
+    } catch (e) {
+      // Disconnected
+    }
+    setConnectedWallet(null);
+    setWalletAlgoBalance(0);
+    setWalletUsdcBalance(0);
+  };
+
+  // Reconnect existing Pera Wallet session on mount / network change
+  useEffect(() => {
+    try {
+      const peraWallet = new PeraWalletConnect();
+      peraWallet
+        .reconnectSession()
+        .then((accounts) => {
+          if (accounts && accounts.length > 0) {
+            setConnectedWallet(accounts[0]);
+            refreshWalletBalance(accounts[0]);
+          }
+        })
+        .catch(() => {});
+    } catch (e) {
+      // Pera SDK offline fallback
+    }
+  }, [network]);
+
+  // Refetch balance when connected address or network updates (with 5s auto-polling)
+  useEffect(() => {
+    if (!connectedWallet) return;
+
+    refreshWalletBalance(connectedWallet);
+    const interval = setInterval(() => {
+      refreshWalletBalance(connectedWallet);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [connectedWallet, network]);
 
   // 1. Initial REST API Fetch from Backend Server
   useEffect(() => {
@@ -366,7 +452,7 @@ export default function App() {
         settledAt: Date.now(),
         finalityMs: 2400,
         status: 'settled',
-        explorerUrl: `https://testnet.explorer.perawallet.app/tx/${txHash}`,
+        explorerUrl: `https://lora.algokit.io/testnet/transaction/${txHash}`,
       };
 
       setDecisions((prev) => [decRecord, ...prev]);
@@ -448,7 +534,7 @@ export default function App() {
         settledAt: Date.now(),
         finalityMs: 2650,
         status: 'settled',
-        explorerUrl: `https://testnet.explorer.perawallet.app/tx/${tx1}`,
+        explorerUrl: `https://lora.algokit.io/testnet/transaction/${tx1}`,
       };
 
       setDecisions((prev) => [decRecord, ...prev]);
@@ -495,6 +581,11 @@ export default function App() {
           openAgentModal={() => setIsAgentModalOpen(true)}
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
+          connectedWallet={connectedWallet}
+          walletAlgoBalance={walletAlgoBalance}
+          walletUsdcBalance={walletUsdcBalance}
+          openPeraModal={() => setIsPeraModalOpen(true)}
+          onDisconnectWallet={handleDisconnectPeraWallet}
         />
 
         {/* Content View Routing */}
@@ -660,6 +751,14 @@ export default function App() {
         providers={providers}
         onExecuteComposite={handleExecuteComposite}
         isSimulating={isSimulating}
+      />
+
+      {/* Pera Wallet Connection Modal */}
+      <PeraWalletModal
+        isOpen={isPeraModalOpen}
+        onClose={() => setIsPeraModalOpen(false)}
+        onConnect={handleConnectPeraWallet}
+        network={network}
       />
     </div>
   );

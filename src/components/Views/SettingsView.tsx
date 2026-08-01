@@ -23,7 +23,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   );
   const [asaId, setAsaId] = useState('31566704');
   const [sponsorWallet, setSponsorWallet] = useState(
-    'ROUTE402SPONSOR3481239012345678901234567890123456789'
+    'K7HVTJFZNC3NUVBIMLYYUDADXWCO7ZARCWZ65Z2WTSF3NXID6C2INRFDTE'
   );
   const [maxFailures, setMaxFailures] = useState(3);
   const [isSaved, setIsSaved] = useState(false);

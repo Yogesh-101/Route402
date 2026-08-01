@@ -1,4 +1,5 @@
 import { Provider, ChaosMode } from '../types';
+import { Route402Database } from './db';
 
 export const CIRCUIT_FAILURE_THRESHOLD = 3;
 export const CIRCUIT_COOLDOWN_MS = 30000; // 30s before half_open probe
@@ -8,7 +9,14 @@ export class CircuitBreakerManager {
 
   constructor(initialProviders: Provider[]) {
     this.providers = new Map();
-    initialProviders.forEach((p) => this.providers.set(p.id, { ...p }));
+
+    // 1. Seed database if empty
+    Route402Database.seedIfEmpty(initialProviders, [], []);
+
+    // 2. Load persisted providers from SQLite DB
+    const dbProviders = Route402Database.getAllProviders();
+    const providersToLoad = dbProviders.length > 0 ? dbProviders : initialProviders;
+    providersToLoad.forEach((p) => this.providers.set(p.id, { ...p }));
   }
 
   public getProviders(): Provider[] {
@@ -21,6 +29,7 @@ export class CircuitBreakerManager {
         now - p.circuitOpenedAt > CIRCUIT_COOLDOWN_MS
       ) {
         p.circuitState = 'half_open';
+        Route402Database.saveProvider(p);
       }
     });
     return Array.from(this.providers.values());
@@ -35,6 +44,7 @@ export class CircuitBreakerManager {
       Date.now() - p.circuitOpenedAt > CIRCUIT_COOLDOWN_MS
     ) {
       p.circuitState = 'half_open';
+      Route402Database.saveProvider(p);
     }
     return p;
   }
@@ -51,6 +61,8 @@ export class CircuitBreakerManager {
     // Rolling latency update
     p.latencyP50Ms = Math.round(p.latencyP50Ms * 0.8 + responseTimeMs * 0.2);
     p.latencyP95Ms = Math.round(p.latencyP95Ms * 0.8 + responseTimeMs * 0.25);
+
+    Route402Database.saveProvider(p);
   }
 
   public recordFailure(id: string, reason: string): boolean {
@@ -67,7 +79,16 @@ export class CircuitBreakerManager {
       stateChanged = true;
     }
 
+    Route402Database.saveProvider(p);
     return stateChanged;
+  }
+
+  public recordEarnings(id: string, amountMicroUSDC: number): void {
+    const p = this.providers.get(id);
+    if (!p) return;
+
+    p.totalEarnedMicroUSDC += amountMicroUSDC;
+    Route402Database.saveProvider(p);
   }
 
   public resetCircuit(id: string): void {
@@ -78,6 +99,8 @@ export class CircuitBreakerManager {
     p.circuitOpenedAt = null;
     p.consecutiveFailures = 0;
     p.chaosMode = 'healthy';
+
+    Route402Database.saveProvider(p);
   }
 
   public resetAllCircuits(): void {
@@ -86,6 +109,7 @@ export class CircuitBreakerManager {
       p.circuitOpenedAt = null;
       p.consecutiveFailures = 0;
       p.chaosMode = 'healthy';
+      Route402Database.saveProvider(p);
     });
   }
 
@@ -103,6 +127,8 @@ export class CircuitBreakerManager {
       p.circuitOpenedAt = null;
       p.consecutiveFailures = 0;
     }
+
+    Route402Database.saveProvider(p);
   }
 
   public addProvider(newProv: Partial<Provider>): Provider {
@@ -128,6 +154,7 @@ export class CircuitBreakerManager {
     };
 
     this.providers.set(id, fullProv);
+    Route402Database.saveProvider(fullProv);
     return fullProv;
   }
 }
