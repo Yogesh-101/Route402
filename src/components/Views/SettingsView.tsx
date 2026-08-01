@@ -116,8 +116,11 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         {/* Fee Sponsorship & Circuit */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-zinc-800">
           <div>
-            <label className="block text-zinc-400 font-medium mb-1">
-              Sponsor Gas Vault Address (0 ALGO Agent Unlock)
+            <label className="block text-amber-400 font-medium mb-1 flex items-center justify-between">
+              <span>Sponsor Gas Vault Address</span>
+              <span className="text-[10px] text-zinc-400 font-mono-num font-semibold bg-zinc-900 px-1.5 py-0.5 rounded border border-zinc-800">
+                Owner: Route402 Fee Vault
+              </span>
             </label>
             <input
               type="text"

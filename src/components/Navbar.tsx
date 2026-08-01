@@ -120,8 +120,8 @@ export const Navbar: React.FC<NavbarProps> = ({
 
               <div className="text-left font-mono-num">
                 <div className="flex items-center gap-1.5">
-                  <span className="font-semibold text-white">
-                    {formatAddress(connectedWallet)}
+                  <span className="font-bold text-white text-[11px] flex items-center gap-1">
+                    <span className="text-amber-400 font-display">AI Agent</span> ({formatAddress(connectedWallet)})
                   </span>
                   <span className="px-1.5 py-0.2 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 text-[9px] font-semibold rounded font-mono-num flex items-center gap-1">
                     <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" /> Pera
@@ -141,9 +141,13 @@ export const Navbar: React.FC<NavbarProps> = ({
             {/* Wallet Options Popover Menu */}
             {isMenuOpen && (
               <div className="absolute right-0 mt-2 w-64 bg-[#09090b] border border-zinc-800 rounded-xl shadow-2xl p-3 z-50 text-xs font-inter space-y-2.5 animate-in fade-in slide-in-from-top-2 duration-150">
-                <div className="p-2.5 bg-[#050505] rounded-lg border border-zinc-800/80">
-                  <span className="text-[10px] text-zinc-500 uppercase font-mono-num font-bold block mb-1">
-                    Connected Pera Address
+                <div className="p-2.5 bg-[#050505] rounded-lg border border-zinc-800/80 space-y-1">
+                  <div className="flex items-center justify-between text-[10px] font-mono-num">
+                    <span className="text-amber-400 uppercase font-bold">Wallet Owner:</span>
+                    <span className="text-white font-semibold font-display">AI Client Agent</span>
+                  </div>
+                  <span className="text-[10px] text-zinc-500 uppercase font-mono-num font-bold block mt-1">
+                    Pera Wallet Address
                   </span>
                   <div className="flex items-center justify-between text-zinc-200 font-mono text-[11px] break-all">
                     <span>{formatAddress(connectedWallet)}</span>

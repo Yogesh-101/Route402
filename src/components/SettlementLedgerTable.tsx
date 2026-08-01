@@ -187,9 +187,34 @@ Content-Type: application/json
 }`}</pre>
               </div>
 
-              <div className="p-3 bg-[#121215] border border-zinc-800 rounded-xl space-y-1 text-zinc-100">
-                <div className="flex justify-between">
-                  <span className="text-zinc-400">Status:</span>
+              <div className="p-3 bg-[#121215] border border-zinc-800 rounded-xl space-y-2 text-zinc-100">
+                <div className="text-[11px] font-bold text-amber-400 border-b border-zinc-800/80 pb-1.5 uppercase tracking-wider">
+                  Wallet Owners & Settlement Roles
+                </div>
+
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="text-zinc-400">Agent Wallet Owner (USDC Payer):</span>
+                  <span className="font-semibold text-white bg-zinc-900 px-2 py-0.5 rounded border border-zinc-800">
+                    AI Client Agent (User)
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="text-zinc-400">Provider Wallet Owner (Receiver):</span>
+                  <span className="font-semibold text-emerald-400 bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-800/40">
+                    {selectedTx.providerName} Treasury Vault
+                  </span>
+                </div>
+
+                <div className="flex justify-between items-center text-[11px]">
+                  <span className="text-zinc-400">Gas Sponsor Vault Owner:</span>
+                  <span className="font-semibold text-amber-300 bg-amber-950/40 px-2 py-0.5 rounded border border-amber-800/40">
+                    Route402 Sponsor Fee Vault
+                  </span>
+                </div>
+
+                <div className="flex justify-between pt-1 border-t border-zinc-800/80">
+                  <span className="text-zinc-400">Settlement Status:</span>
                   <span className="font-bold uppercase text-[#FF5C5C]">{selectedTx.status}</span>
                 </div>
                 {selectedTx.refusedReason && (

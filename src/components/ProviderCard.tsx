@@ -93,8 +93,11 @@ export const ProviderCard: React.FC<ProviderCardProps> = ({
               <h4 className="text-sm font-bold text-white font-display">
                 {provider.name}
               </h4>
-              <p className="text-[11px] font-mono-num text-zinc-500 truncate max-w-[180px]">
-                {provider.endpoint}
+              <p className="text-[10px] font-mono-num text-amber-400/90 font-semibold flex items-center gap-1">
+                Owner: {provider.name} Treasury
+              </p>
+              <p className="text-[10px] font-mono-num text-zinc-500 truncate max-w-[180px]">
+                Wallet: {provider.walletAddress ? `${provider.walletAddress.substring(0, 6)}...${provider.walletAddress.substring(provider.walletAddress.length - 4)}` : 'Generating...'}
               </p>
             </div>
           </div>

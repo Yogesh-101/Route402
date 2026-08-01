@@ -30,7 +30,7 @@ export const RoutingVisualization: React.FC<RoutingVisualizationProps> = ({
       name: 'Agent Request',
       sub: 'x402 Negotiator',
       icon: Bot,
-      detail: 'Holds 0 ALGO | Max Ceiling',
+      detail: 'Owner: AI Client Agent',
     },
     {
       id: 2,
@@ -51,14 +51,14 @@ export const RoutingVisualization: React.FC<RoutingVisualizationProps> = ({
       name: 'Selected Provider',
       sub: selectedProviderName,
       icon: Server,
-      detail: `Capability: ${capability}`,
+      detail: `Owner: ${selectedProviderName} Treasury`,
     },
     {
       id: 5,
       name: 'Algorand x402',
       sub: 'Atomic Grouping',
       icon: Coins,
-      detail: 'Fee Sponsored (0 ALGO)',
+      detail: 'Sponsor: Route402 Fee Vault',
     },
     {
       id: 6,
