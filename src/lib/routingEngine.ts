@@ -48,7 +48,7 @@ export function evaluateAndScoreCandidates(
     } else if (provider.chaosMode === 'offline') {
       eligible = false;
       ineligibleReason = 'Provider Offline / Unreachable';
-    } else if (maxPriceCeiling && provider.advertisedPriceMicroUSDC > maxPriceCeiling) {
+    } else if (maxPriceCeiling && maxPriceCeiling > 0 && provider.advertisedPriceMicroUSDC > maxPriceCeiling) {
       eligible = false;
       ineligibleReason = `Exceeds max price ceiling (${provider.advertisedPriceMicroUSDC.toLocaleString()} µUSDC > ${maxPriceCeiling.toLocaleString()} µUSDC)`;
     } else if (excludeList.includes(provider.id)) {

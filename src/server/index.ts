@@ -48,7 +48,7 @@ function calculateSavings(): SavingsSnapshot {
 
   const naiveBaselineMicroUSDC = Math.round(
     decisions.reduce((acc, d) => {
-      const highestPrice = Math.max(...d.candidates.map((c) => c.priceMicroUSDC), 25000);
+      const highestPrice = Math.max(...d.candidates.map((c) => c.priceMicroUSDC), 5000);
       return acc + highestPrice;
     }, 0)
   );

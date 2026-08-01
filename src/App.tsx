@@ -41,6 +41,11 @@ import {
   generateTxHash,
   computeSavings,
 } from './lib/routingEngine';
+import {
+  sendPeraPaymentTransaction,
+  sendPeraCompositeTransaction,
+  getPeraWallet,
+} from './lib/peraWallet';
 
 import { Play, X, Sliders, Send, Zap, Bot } from 'lucide-react';
 
@@ -85,7 +90,7 @@ export default function App() {
   // Quick Agent Modal form state
   const [quickCapability, setQuickCapability] = useState<CapabilityType>('text.summarize');
   const [quickPriority, setQuickPriority] = useState<PriorityProfile>('balanced');
-  const [quickMaxPrice, setQuickMaxPrice] = useState<number>(20000);
+  const [quickMaxPrice, setQuickMaxPrice] = useState<number>(5000);
 
   // Fetch live ALGO & USDC balances from Algorand node for connected address
   const refreshWalletBalance = async (addr: string) => {
@@ -128,7 +133,7 @@ export default function App() {
 
   const handleDisconnectPeraWallet = async () => {
     try {
-      const peraWallet = new PeraWalletConnect();
+      const peraWallet = getPeraWallet();
       await peraWallet.disconnect();
     } catch (e) {
       // Disconnected
@@ -141,7 +146,7 @@ export default function App() {
   // Reconnect existing Pera Wallet session on mount / network change
   useEffect(() => {
     try {
-      const peraWallet = new PeraWalletConnect();
+      const peraWallet = getPeraWallet();
       peraWallet
         .reconnectSession()
         .then((accounts) => {
@@ -365,6 +370,62 @@ export default function App() {
     // Step 3: Decision Engine Scorer
     setActiveSimStep(3);
 
+    const candidates = evaluateAndScoreCandidates(providers, {
+      capability,
+      payload: {},
+      constraints: { priority, maxPriceMicroUSDC: maxPrice },
+    });
+
+    let eligibleCandidates = candidates.filter((c) => c.eligible).sort((a, b) => a.compositeScore - b.compositeScore);
+
+    if (eligibleCandidates.length === 0) {
+      // Automatic Rerouting Fallback: Pick cheapest healthy candidate
+      const healthyCandidates = candidates.filter(
+        (c) => !c.ineligibleReason?.includes('Circuit Open') && !c.ineligibleReason?.includes('Offline')
+      );
+      if (healthyCandidates.length > 0) {
+        const cheapestFallback = [...healthyCandidates].sort((a, b) => a.priceMicroUSDC - b.priceMicroUSDC)[0];
+        eligibleCandidates = [{ ...cheapestFallback, eligible: true }];
+      } else {
+        setIsSimulating(false);
+        setActiveSimStep(0);
+        alert(`All registered providers for ${capability} are currently offline or open circuit.`);
+        return;
+      }
+    }
+
+    const winnerCandidate = eligibleCandidates[0];
+    const winnerProvObj = providers.find((p) => p.id === winnerCandidate.providerId) || providers[0];
+    setSimTargetName(winnerCandidate.providerName);
+
+    // Step 4: Dispatch to Selected Provider
+    setActiveSimStep(4);
+    await new Promise((r) => setTimeout(r, 250));
+
+    // Step 5: Algorand x402 Settlement
+    setActiveSimStep(5);
+
+    let peraTxData: any = null;
+
+    // IF PERA WALLET CONNECTED -> Trigger transaction signing request in Pera Wallet!
+    if (connectedWallet) {
+      const peraRes = await sendPeraPaymentTransaction(
+        connectedWallet,
+        winnerProvObj.walletAddress || 'ZUNPAEMLOF6H3YE6Q6GJBG2BOWUNID7ZQJ5FX6SE2KEZSR5VAFSMTSPERE',
+        winnerCandidate.priceMicroUSDC,
+        network
+      );
+
+      if (!peraRes.success) {
+        setIsSimulating(false);
+        setActiveSimStep(0);
+        alert(`[Pera Wallet] ${peraRes.error || 'Transaction request was cancelled by user.'}`);
+        return;
+      }
+      peraTxData = peraRes;
+      refreshWalletBalance(connectedWallet);
+    }
+
     try {
       // Execute live on backend server
       const res = await fetch(`${API_BASE}/route`, {
@@ -381,22 +442,17 @@ export default function App() {
 
       const serverData = await res.json();
 
-      if (!res.ok) {
+      if (res.ok && serverData.payment && peraTxData) {
+        serverData.payment.txIds = peraTxData.txIds;
+        serverData.payment.explorerUrl = peraTxData.explorerUrl;
+      }
+
+      if (!res.ok && !peraTxData) {
         setIsSimulating(false);
         setActiveSimStep(0);
         alert(serverData.message || 'Routing request failed.');
         return;
       }
-
-      setSimTargetName(serverData.routing.selectedProviderName);
-
-      // Step 4: Dispatch to Selected Provider
-      setActiveSimStep(4);
-      await new Promise((r) => setTimeout(r, 250));
-
-      // Step 5: Algorand x402 Settlement
-      setActiveSimStep(5);
-      await new Promise((r) => setTimeout(r, 250));
 
       // Step 6: Verified Response
       setActiveSimStep(6);
@@ -410,32 +466,11 @@ export default function App() {
       }
     } catch (err) {
       // Client-side fallback if server offline
-      const candidates = evaluateAndScoreCandidates(providers, {
-        capability,
-        payload: {},
-        constraints: { priority, maxPriceMicroUSDC: maxPrice },
-      });
-
-      const eligibleCandidates = candidates.filter((c) => c.eligible);
-      if (eligibleCandidates.length === 0) {
-        setIsSimulating(false);
-        setActiveSimStep(0);
-        alert(`No eligible provider available for ${capability} within ceiling of ${maxPrice} µUSDC.`);
-        return;
-      }
-
-      const winner = [...eligibleCandidates].sort((a, b) => a.compositeScore - b.compositeScore)[0];
-      setSimTargetName(winner.providerName);
-
-      setActiveSimStep(4);
-      await new Promise((r) => setTimeout(r, 250));
-      setActiveSimStep(5);
-      await new Promise((r) => setTimeout(r, 250));
       setActiveSimStep(6);
 
       const decId = `dec_${Date.now().toString(36)}`;
-      const txHash = generateTxHash();
-      const reason = generateDecisionExplanation(winner, candidates, {
+      const txHash = peraTxData?.txId || generateTxHash();
+      const reason = generateDecisionExplanation(winnerCandidate, candidates, {
         capability,
         payload: {},
         constraints: { priority, maxPriceMicroUSDC: maxPrice },
@@ -447,26 +482,26 @@ export default function App() {
         capability,
         timestamp: Date.now(),
         candidates,
-        selectedProviderId: winner.providerId,
-        selectedProviderName: winner.providerName,
+        selectedProviderId: winnerCandidate.providerId,
+        selectedProviderName: winnerCandidate.providerName,
         reason,
-        fallbackChain: [winner.providerId],
+        fallbackChain: [winnerCandidate.providerId],
       };
 
       const payRecord: PaymentRecord = {
         id: `pay_${Date.now().toString(36)}`,
         decisionId: decId,
-        providerId: winner.providerId,
-        providerName: winner.providerName,
-        amountMicroUSDC: winner.priceMicroUSDC,
+        providerId: winnerCandidate.providerId,
+        providerName: winnerCandidate.providerName,
+        amountMicroUSDC: winnerCandidate.priceMicroUSDC,
         network,
-        txIds: [txHash],
-        groupId: `GROUP_ALG_X402_${Math.floor(Math.random() * 899999 + 100000)}`,
+        txIds: peraTxData?.txIds || [txHash],
+        groupId: `GROUP_ALG_PERA_${Math.floor(Math.random() * 899999 + 100000)}`,
         feeSponsored: true,
         settledAt: Date.now(),
         finalityMs: 2400,
         status: 'settled',
-        explorerUrl: `https://lora.algokit.io/testnet/transaction/${txHash}`,
+        explorerUrl: peraTxData?.explorerUrl || `https://lora.algokit.io/testnet/transaction/${txHash}`,
       };
 
       setDecisions((prev) => [decRecord, ...prev]);
@@ -504,6 +539,29 @@ export default function App() {
     await new Promise((r) => setTimeout(r, 300));
     setActiveSimStep(5); // Algorand Grouping Step
 
+    let peraCompData: any = null;
+
+    // IF PERA WALLET CONNECTED -> Trigger Atomic Group transaction signature in Pera Wallet!
+    if (connectedWallet) {
+      const peraRes = await sendPeraCompositeTransaction(
+        connectedWallet,
+        prov1.walletAddress || 'ZUNPAEMLOF6H3YE6Q6GJBG2BOWUNID7ZQJ5FX6SE2KEZSR5VAFSMTSPERE',
+        prov1.advertisedPriceMicroUSDC,
+        prov2.walletAddress || 'ZUNPAEMLOF6H3YE6Q6GJBG2BOWUNID7ZQJ5FX6SE2KEZSR5VAFSMTSPERE',
+        prov2.advertisedPriceMicroUSDC,
+        network
+      );
+
+      if (!peraRes.success) {
+        setIsSimulating(false);
+        setActiveSimStep(0);
+        alert(`[Pera Wallet Composite] ${peraRes.error || 'Atomic group transaction cancelled in Pera Wallet.'}`);
+        return;
+      }
+      peraCompData = peraRes;
+      refreshWalletBalance(connectedWallet);
+    }
+
     try {
       const res = await fetch(`${API_BASE}/composite`, {
         method: 'POST',
@@ -518,13 +576,18 @@ export default function App() {
       });
       const data = await res.json();
       if (data.compositeGroup) {
+        if (peraCompData) {
+          data.compositeGroup.txIds = peraCompData.txIds;
+          data.compositeGroup.groupId = peraCompData.groupId || data.compositeGroup.groupId;
+          data.compositeGroup.explorerUrl = peraCompData.explorerUrl;
+        }
         setPayments((prev) => [data.compositeGroup, ...prev]);
       }
     } catch (e) {
       // client-side fallback
-      const tx1 = generateTxHash();
-      const tx2 = generateTxHash();
-      const groupId = `ATOMIC_GRP_${Math.floor(Math.random() * 899999 + 100000)}_COMPOSITE`;
+      const tx1 = peraCompData?.txIds?.[0] || generateTxHash();
+      const tx2 = peraCompData?.txIds?.[1] || generateTxHash();
+      const groupId = peraCompData?.groupId || `ATOMIC_GRP_${Math.floor(Math.random() * 899999 + 100000)}_PERA`;
 
       const decId = `dec_comp_${Date.now().toString(36)}`;
       const decRecord: RouteDecision = {
@@ -554,7 +617,7 @@ export default function App() {
         settledAt: Date.now(),
         finalityMs: 2650,
         status: 'settled',
-        explorerUrl: `https://lora.algokit.io/testnet/transaction/${tx1}`,
+        explorerUrl: peraCompData?.explorerUrl || `https://lora.algokit.io/testnet/transaction/${tx1}`,
       };
 
       setDecisions((prev) => [decRecord, ...prev]);
@@ -732,9 +795,9 @@ export default function App() {
                 </div>
                 <input
                   type="range"
-                  min="5000"
-                  max="40000"
-                  step="1000"
+                  min="0"
+                  max="30000"
+                  step="500"
                   value={quickMaxPrice}
                   onChange={(e) => setQuickMaxPrice(Number(e.target.value))}
                   className="w-full accent-[#FF0A16] cursor-pointer"

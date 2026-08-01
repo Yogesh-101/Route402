@@ -38,7 +38,7 @@ export const ChaosSimulator: React.FC<ChaosSimulatorProps> = ({
 }) => {
   const [capability, setCapability] = useState<CapabilityType>('text.summarize');
   const [priority, setPriority] = useState<PriorityProfile>('balanced');
-  const [maxPrice, setMaxPrice] = useState<number>(20000);
+  const [maxPrice, setMaxPrice] = useState<number>(5000);
 
   return (
     <div className="bg-[#09090b] border border-zinc-800/80 rounded-2xl p-6 shadow-card mb-6">
@@ -115,9 +115,9 @@ export const ChaosSimulator: React.FC<ChaosSimulatorProps> = ({
               </div>
               <input
                 type="range"
-                min="5000"
-                max="40000"
-                step="1000"
+                min="0"
+                max="30000"
+                step="500"
                 value={maxPrice}
                 onChange={(e) => setMaxPrice(Number(e.target.value))}
                 className="w-full accent-[#FF0A16] cursor-pointer"

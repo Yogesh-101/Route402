@@ -27,7 +27,7 @@ export const RouterView: React.FC<RouterViewProps> = ({
 }) => {
   const [capability, setCapability] = useState<CapabilityType>('text.summarize');
   const [priority, setPriority] = useState<PriorityProfile>('balanced');
-  const [maxPrice, setMaxPrice] = useState<number>(20000);
+  const [maxPrice, setMaxPrice] = useState<number>(5000);
 
   // Scored candidate matrix live preview
   const candidates = evaluateAndScoreCandidates(providers, {
@@ -143,9 +143,9 @@ export const RouterView: React.FC<RouterViewProps> = ({
             </label>
             <input
               type="range"
-              min="5000"
-              max="40000"
-              step="1000"
+              min="0"
+              max="30000"
+              step="500"
               value={maxPrice}
               onChange={(e) => setMaxPrice(Number(e.target.value))}
               className="w-full accent-[#FF0A16] mt-1 cursor-pointer"

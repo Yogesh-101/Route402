@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { PeraWalletConnect } from '@perawallet/connect';
+import { getPeraWallet } from '../lib/peraWallet';
 import {
   Wallet,
   X,
@@ -18,17 +19,6 @@ interface PeraWalletModalProps {
   onConnect: (address: string, accountName?: string) => void;
   network: 'testnet' | 'mainnet';
   currentAccountName?: string;
-}
-
-let peraWalletInstance: PeraWalletConnect | null = null;
-
-function getPeraWalletInstance(): PeraWalletConnect {
-  if (!peraWalletInstance) {
-    peraWalletInstance = new PeraWalletConnect({
-      shouldShowSignTxnToast: true,
-    });
-  }
-  return peraWalletInstance;
 }
 
 export const PeraWalletModal: React.FC<PeraWalletModalProps> = ({
@@ -51,7 +41,7 @@ export const PeraWalletModal: React.FC<PeraWalletModalProps> = ({
     setErrorMsg(null);
 
     try {
-      const peraWallet = getPeraWalletInstance();
+      const peraWallet = getPeraWallet();
       const accounts = await peraWallet.connect();
 
       // Handle disconnect event on wallet session termination

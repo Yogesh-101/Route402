@@ -16,7 +16,7 @@ export const MOCK_PROVIDERS_CONFIG: ProviderServerConfig[] = [
     name: 'Alpha Summarize',
     port: 4001,
     walletAddress: 'ZUNPAEMLOF6H3YE6Q6GJBG2BOWUNID7ZQJ5FX6SE2KEZSR5VAFSMTSPERE',
-    priceMicroUSDC: 8000,
+    priceMicroUSDC: 100,
     capability: 'text.summarize',
   },
   {
@@ -24,7 +24,7 @@ export const MOCK_PROVIDERS_CONFIG: ProviderServerConfig[] = [
     name: 'Beta FastSummarize',
     port: 4002,
     walletAddress: 'ZUNPAEMLOF6H3YE6Q6GJBG2BOWUNID7ZQJ5FX6SE2KEZSR5VAFSMTSPERE',
-    priceMicroUSDC: 12000,
+    priceMicroUSDC: 250,
     capability: 'text.summarize',
   },
   {
@@ -32,7 +32,7 @@ export const MOCK_PROVIDERS_CONFIG: ProviderServerConfig[] = [
     name: 'Gamma Enterprise AI',
     port: 4003,
     walletAddress: 'ZUNPAEMLOF6H3YE6Q6GJBG2BOWUNID7ZQJ5FX6SE2KEZSR5VAFSMTSPERE',
-    priceMicroUSDC: 25000,
+    priceMicroUSDC: 800,
     capability: 'text.summarize',
   },
 ];

@@ -187,6 +187,17 @@ export class Route402Database {
       initialProviders.forEach((p) => this.saveProvider(p));
       initialDecisions.forEach((d) => this.saveDecision(d));
       initialPayments.forEach((p) => this.savePayment(p));
+    } else {
+      // Sync reduced provider prices into SQLite DB
+      try {
+        db.prepare('UPDATE providers SET advertisedPriceMicroUSDC = 100 WHERE id = "prov_alpha"').run();
+        db.prepare('UPDATE providers SET advertisedPriceMicroUSDC = 250 WHERE id = "prov_beta"').run();
+        db.prepare('UPDATE providers SET advertisedPriceMicroUSDC = 800 WHERE id = "prov_gamma"').run();
+        db.prepare('UPDATE providers SET advertisedPriceMicroUSDC = 400 WHERE id = "prov_delta"').run();
+        db.prepare('UPDATE providers SET advertisedPriceMicroUSDC = 1200 WHERE id = "prov_epsilon"').run();
+      } catch (e) {
+        // Table update fallback
+      }
     }
   }
 }

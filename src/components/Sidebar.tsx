@@ -4,9 +4,6 @@ import {
   Server,
   Route,
   Receipt,
-  BarChart3,
-  Flame,
-  Settings,
   Shield,
   Zap,
   Layers,
@@ -45,9 +42,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     { id: 'router', label: 'AI Router & Scorer', icon: Route },
     { id: 'transactions', label: 'Settlement Ledger', icon: Receipt },
-    { id: 'analytics', label: 'Savings Analytics', icon: BarChart3 },
-    { id: 'chaos', label: 'Chaos & Test Harness', icon: Flame },
-    { id: 'settings', label: 'Settings & Config', icon: Settings },
   ];
 
   return (

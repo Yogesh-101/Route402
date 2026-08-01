@@ -6,7 +6,7 @@ export const INITIAL_PROVIDERS: Provider[] = [
     name: 'Alpha Inference (Cheap)',
     endpoint: 'https://api.alpha-ai.net/v1/x402/summarize',
     capabilities: ['text.summarize', 'audio.transcribe'],
-    advertisedPriceMicroUSDC: 8000, // $0.008
+    advertisedPriceMicroUSDC: 100, // $0.0001
     walletAddress: 'ZUNPAEMLOF6H3YE6Q6GJBG2BOWUNID7ZQJ5FX6SE2KEZSR5VAFSMTSPERE',
     registeredAt: Date.now() - 86400000 * 14,
     latencyP50Ms: 1120,
@@ -17,7 +17,7 @@ export const INITIAL_PROVIDERS: Provider[] = [
     circuitOpenedAt: null,
     consecutiveFailures: 0,
     chaosMode: 'healthy',
-    totalEarnedMicroUSDC: 9920000,
+    totalEarnedMicroUSDC: 124000,
     latencyHistory: [
       { timestamp: Date.now() - 3600000 * 5, latencyMs: 1100 },
       { timestamp: Date.now() - 3600000 * 4, latencyMs: 1250 },
@@ -31,7 +31,7 @@ export const INITIAL_PROVIDERS: Provider[] = [
     name: 'Beta FastSummarize',
     endpoint: 'https://api.beta-fast.io/x402/summarize',
     capabilities: ['text.summarize', 'code.review'],
-    advertisedPriceMicroUSDC: 12000, // $0.012
+    advertisedPriceMicroUSDC: 250, // $0.00025
     walletAddress: 'ZUNPAEMLOF6H3YE6Q6GJBG2BOWUNID7ZQJ5FX6SE2KEZSR5VAFSMTSPERE',
     registeredAt: Date.now() - 86400000 * 10,
     latencyP50Ms: 380,
@@ -42,7 +42,7 @@ export const INITIAL_PROVIDERS: Provider[] = [
     circuitOpenedAt: null,
     consecutiveFailures: 0,
     chaosMode: 'healthy',
-    totalEarnedMicroUSDC: 37440000,
+    totalEarnedMicroUSDC: 780000,
     latencyHistory: [
       { timestamp: Date.now() - 3600000 * 5, latencyMs: 390 },
       { timestamp: Date.now() - 3600000 * 4, latencyMs: 375 },
@@ -56,7 +56,7 @@ export const INITIAL_PROVIDERS: Provider[] = [
     name: 'Gamma DeepReason (Enterprise)',
     endpoint: 'https://api.gamma-deep.com/x402/v1',
     capabilities: ['text.summarize', 'code.review', 'data.enrichment'],
-    advertisedPriceMicroUSDC: 24000, // $0.024
+    advertisedPriceMicroUSDC: 800, // $0.0008
     walletAddress: 'ZUNPAEMLOF6H3YE6Q6GJBG2BOWUNID7ZQJ5FX6SE2KEZSR5VAFSMTSPERE',
     registeredAt: Date.now() - 86400000 * 30,
     latencyP50Ms: 210,
@@ -67,7 +67,7 @@ export const INITIAL_PROVIDERS: Provider[] = [
     circuitOpenedAt: null,
     consecutiveFailures: 0,
     chaosMode: 'healthy',
-    totalEarnedMicroUSDC: 117360000,
+    totalEarnedMicroUSDC: 3912000,
     latencyHistory: [
       { timestamp: Date.now() - 3600000 * 5, latencyMs: 210 },
       { timestamp: Date.now() - 3600000 * 4, latencyMs: 205 },
@@ -81,7 +81,7 @@ export const INITIAL_PROVIDERS: Provider[] = [
     name: 'Delta CodeSec & Audit',
     endpoint: 'https://api.deltasec.org/x402/audit',
     capabilities: ['code.review', 'data.enrichment'],
-    advertisedPriceMicroUSDC: 16000, // $0.016
+    advertisedPriceMicroUSDC: 400, // $0.0004
     walletAddress: 'WS7LV5DTW2X3WMVRDD5GSJVHWOYTZRT2FLSZOPOWB2FSLYJAC2RSQXLVPE',
     registeredAt: Date.now() - 86400000 * 7,
     latencyP50Ms: 450,
@@ -92,7 +92,7 @@ export const INITIAL_PROVIDERS: Provider[] = [
     circuitOpenedAt: null,
     consecutiveFailures: 0,
     chaosMode: 'healthy',
-    totalEarnedMicroUSDC: 14240000,
+    totalEarnedMicroUSDC: 356000,
     latencyHistory: [
       { timestamp: Date.now() - 3600000 * 5, latencyMs: 460 },
       { timestamp: Date.now() - 3600000 * 4, latencyMs: 440 },
@@ -106,7 +106,7 @@ export const INITIAL_PROVIDERS: Provider[] = [
     name: 'Epsilon Generative Media',
     endpoint: 'https://media.epsilon-x402.ai/generate',
     capabilities: ['image.generate', 'audio.transcribe'],
-    advertisedPriceMicroUSDC: 35000, // $0.035
+    advertisedPriceMicroUSDC: 1200, // $0.0012
     walletAddress: 'RULI3A6QJMVPTQGHK3CUSBV67QFBEKZXKIGIKTJUHKZHPSKD4X33VZJ26Y',
     registeredAt: Date.now() - 86400000 * 5,
     latencyP50Ms: 1420,
@@ -117,7 +117,7 @@ export const INITIAL_PROVIDERS: Provider[] = [
     circuitOpenedAt: null,
     consecutiveFailures: 0,
     chaosMode: 'healthy',
-    totalEarnedMicroUSDC: 15750000,
+    totalEarnedMicroUSDC: 540000,
     latencyHistory: [
       { timestamp: Date.now() - 3600000 * 5, latencyMs: 1400 },
       { timestamp: Date.now() - 3600000 * 4, latencyMs: 1450 },

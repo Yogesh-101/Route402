@@ -54,7 +54,7 @@ export function evaluateAndScoreCandidates(
     if (p.circuitState === 'open') {
       eligible = false;
       ineligibleReason = 'circuit open (failure threshold reached)';
-    } else if (maxPrice && p.advertisedPriceMicroUSDC > maxPrice) {
+    } else if (maxPrice && maxPrice > 0 && p.advertisedPriceMicroUSDC > maxPrice) {
       eligible = false;
       ineligibleReason = `exceeds max price (${p.advertisedPriceMicroUSDC} > ${maxPrice})`;
     } else if (excludeProviders.includes(p.id)) {
