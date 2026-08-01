@@ -1,4 +1,22 @@
-# 🚀 Route402 — x402-Native AI Agent Payment Route
+# 🚀 Route402 — x402-Native AI Agent Payment Router
+
+<div align="center">
+
+![Algorand](https://img.shields.io/badge/Blockchain-Algorand_TestNet-000000?style=for-the-badge&logo=algorand&logoColor=white)
+![x402 Protocol](https://img.shields.io/badge/Protocol-x402_Payment_Required-3B82F6?style=for-the-badge)
+![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
+![React](https://img.shields.io/badge/React_19-61DAFB?style=for-the-badge&logo=react&logoColor=black)
+![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![Express](https://img.shields.io/badge/Express-000000?style=for-the-badge&logo=express&logoColor=white)
+![SQLite](https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white)
+
+<p align="center">
+  <b>Stateless HTTP 402 service routing, real-time candidate scoring, automated circuit-breaker fault tolerance, and atomic Algorand blockchain settlement for autonomous AI agents.</b>
+</p>
+
+</div>
+
+---
 
 ## 📌 Overview
 
