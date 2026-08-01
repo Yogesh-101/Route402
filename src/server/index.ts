@@ -233,12 +233,17 @@ app.post('/v1/route', async (req, res) => {
 
   // Construct Real Algorand Atomic Group Transaction with Fee Abstraction
   const winningProvObj = circuitManager.getProvider(selectedWinner.providerId)!;
-  const targetWallet = winningProvObj.walletAddress && winningProvObj.walletAddress.length >= 50
-    ? winningProvObj.walletAddress
-    : DEFAULT_PROVIDER_ADDRESS;
 
-  const senderAddress = (request.agentId && request.agentId.length >= 50)
-    ? request.agentId
+  const customReceiver = req.body?.receiverAddress || req.body?.providerAddress;
+  const targetWallet = (customReceiver && customReceiver.length >= 50)
+    ? customReceiver
+    : (winningProvObj.walletAddress && winningProvObj.walletAddress.length >= 50
+        ? winningProvObj.walletAddress
+        : DEFAULT_PROVIDER_ADDRESS);
+
+  const customSender = req.body?.senderAddress || req.body?.agentAddress || request.agentId;
+  const senderAddress = (customSender && customSender.length >= 50)
+    ? customSender
     : DEFAULT_AGENT_ADDRESS;
 
   const algorandResult = await createAlgorandPaymentGroup(
@@ -327,15 +332,21 @@ app.post('/v1/route', async (req, res) => {
 
 // 7. POST /v1/composite — Execute Algorand Atomic Group Composite Task
 app.post('/v1/composite', async (req, res) => {
-  const { prov1Id, prov2Id } = req.body;
+  const { prov1Id, prov2Id, senderAddress, prov1Wallet, prov2Wallet } = req.body;
   const p1 = circuitManager.getProvider(prov1Id || 'prov_beta') || circuitManager.getProviders()[0];
   const p2 = circuitManager.getProvider(prov2Id || 'prov_delta') || circuitManager.getProviders()[1];
 
+  const customSender = senderAddress || req.body?.agentAddress || req.body?.agentId;
+  const fromAddr = (customSender && customSender.length >= 50) ? customSender : DEFAULT_AGENT_ADDRESS;
+
+  const receiver1 = prov1Wallet || p1.walletAddress || DEFAULT_PROVIDER_ADDRESS;
+  const receiver2 = prov2Wallet || p2.walletAddress || DEFAULT_PROVIDER_ADDRESS;
+
   const compositeResult = await createAlgorandCompositeGroup(
-    'AGENTWALLETADDRESS123456789012345678901234567890',
-    p1.walletAddress,
+    fromAddr,
+    receiver1,
     p1.advertisedPriceMicroUSDC,
-    p2.walletAddress,
+    receiver2,
     p2.advertisedPriceMicroUSDC
   );
 

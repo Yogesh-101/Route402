@@ -374,6 +374,8 @@ export default function App() {
           capability,
           payload: { prompt: 'Summarize agent routing architecture' },
           constraints: { priority, maxPriceMicroUSDC: maxPrice },
+          senderAddress: connectedWallet || undefined,
+          agentId: connectedWallet || undefined,
         }),
       });
 
@@ -506,7 +508,13 @@ export default function App() {
       const res = await fetch(`${API_BASE}/composite`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prov1Id: p1Id, prov2Id: p2Id }),
+        body: JSON.stringify({
+          prov1Id: p1Id,
+          prov2Id: p2Id,
+          senderAddress: connectedWallet || undefined,
+          prov1Wallet: prov1.walletAddress,
+          prov2Wallet: prov2.walletAddress,
+        }),
       });
       const data = await res.json();
       if (data.compositeGroup) {
