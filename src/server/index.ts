@@ -237,8 +237,12 @@ app.post('/v1/route', async (req, res) => {
     ? winningProvObj.walletAddress
     : DEFAULT_PROVIDER_ADDRESS;
 
+  const senderAddress = (request.agentId && request.agentId.length >= 50)
+    ? request.agentId
+    : DEFAULT_AGENT_ADDRESS;
+
   const algorandResult = await createAlgorandPaymentGroup(
-    DEFAULT_AGENT_ADDRESS,
+    senderAddress,
     targetWallet,
     winningProvObj.advertisedPriceMicroUSDC
   );

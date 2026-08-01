@@ -7,7 +7,7 @@ export const INITIAL_PROVIDERS: Provider[] = [
     endpoint: 'https://api.alpha-ai.net/v1/x402/summarize',
     capabilities: ['text.summarize', 'audio.transcribe'],
     advertisedPriceMicroUSDC: 8000, // $0.008
-    walletAddress: 'WMG2XO3YBT3272YAOMVT6ZVRIES3B2GNPNMMSQM6G5ZWC77YIYXFID3PAY',
+    walletAddress: 'ZUNPAEMLOF6H3YE6Q6GJBG2BOWUNID7ZQJ5FX6SE2KEZSR5VAFSMTSPERE',
     registeredAt: Date.now() - 86400000 * 14,
     latencyP50Ms: 1120,
     latencyP95Ms: 2350,
@@ -32,7 +32,7 @@ export const INITIAL_PROVIDERS: Provider[] = [
     endpoint: 'https://api.beta-fast.io/x402/summarize',
     capabilities: ['text.summarize', 'code.review'],
     advertisedPriceMicroUSDC: 12000, // $0.012
-    walletAddress: '2E3L3EZNON23FGZ476YZ6OKPK2ECQQ4TKEOMOH6ZTSQ2OTLK7QIQ6JMG54',
+    walletAddress: 'ZUNPAEMLOF6H3YE6Q6GJBG2BOWUNID7ZQJ5FX6SE2KEZSR5VAFSMTSPERE',
     registeredAt: Date.now() - 86400000 * 10,
     latencyP50Ms: 380,
     latencyP95Ms: 720,
@@ -57,7 +57,7 @@ export const INITIAL_PROVIDERS: Provider[] = [
     endpoint: 'https://api.gamma-deep.com/x402/v1',
     capabilities: ['text.summarize', 'code.review', 'data.enrichment'],
     advertisedPriceMicroUSDC: 24000, // $0.024
-    walletAddress: 'APZQHTRPFMB2X4VZGNA4XO2TJWBJHXEJOQTVH4PJXQ2PCY3VUJPPKRY36A',
+    walletAddress: 'ZUNPAEMLOF6H3YE6Q6GJBG2BOWUNID7ZQJ5FX6SE2KEZSR5VAFSMTSPERE',
     registeredAt: Date.now() - 86400000 * 30,
     latencyP50Ms: 210,
     latencyP95Ms: 480,

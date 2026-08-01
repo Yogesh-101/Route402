@@ -49,11 +49,12 @@ export const AGENT_ACCOUNT = algosdk.generateAccount();
 export const PROVIDER_ACCOUNT = algosdk.generateAccount();
 
 export const SPONSOR_ADDRESS = algosdk.encodeAddress(SPONSOR_ACCOUNT.addr.publicKey);
-export const DEFAULT_AGENT_ADDRESS = algosdk.encodeAddress(AGENT_ACCOUNT.addr.publicKey);
-export const DEFAULT_PROVIDER_ADDRESS = algosdk.encodeAddress(PROVIDER_ACCOUNT.addr.publicKey);
+export const DEFAULT_AGENT_ADDRESS = 'JZS3NBVPDOKUAT6HJDBZSV4U4YCTDL7EIBRENUZS2AAADBIMIIZDKG24MM';
+export const DEFAULT_PROVIDER_ADDRESS = 'ZUNPAEMLOF6H3YE6Q6GJBG2BOWUNID7ZQJ5FX6SE2KEZSR5VAFSMTSPERE';
 
-// TestNet USDC ASA ID
-export const TESTNET_USDC_ASA_ID = 31566704;
+// Algorand USDC ASA IDs
+export const TESTNET_USDC_ASA_ID = 10458941;
+export const MAINNET_USDC_ASA_ID = 31566704;
 
 function isValidAlgorandAddress(addr: any): boolean {
   if (typeof addr !== 'string') return false;
@@ -105,7 +106,7 @@ export async function createAlgorandPaymentGroup(
     sender: fromAddr,
     receiver: toAddr,
     amount: amountMicroUSDC,
-    assetIndex: network === 'mainnet' ? 312769 : TESTNET_USDC_ASA_ID,
+    assetIndex: network === 'mainnet' ? MAINNET_USDC_ASA_ID : TESTNET_USDC_ASA_ID,
     suggestedParams: { ...baseParams, fee: 0, flatFee: true },
   });
 
